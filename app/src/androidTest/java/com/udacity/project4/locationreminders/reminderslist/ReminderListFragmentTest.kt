@@ -11,13 +11,16 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
+import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.google.android.material.internal.ContextUtils
 import com.udacity.project4.R
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
@@ -33,6 +36,7 @@ import com.udacity.project4.utils.EspressoIdlingResource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runBlockingTest
+import org.hamcrest.Matchers
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -150,17 +154,38 @@ class ReminderListFragmentTest : AutoCloseKoinTest() {
         repository.deleteAllReminders()
     }
 
+
     @Test
-    fun shouldShowError_retrievingReminders() = runBlocking {
+    fun onRefreshLayoutSwipe_showToast() = runBlocking {
         val fragmentScenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
         dataBindingIdlingResource.monitorFragment(fragmentScenario)
 
-        fragmentScenario.onFragment {
-            it._viewModel.showSnackBar.postValue("Error happened")
-        }
+        val reminderDTO = ReminderDTO(
+            "Bangkok",
+            "Capital of Thailand",
+            "Thailand",
+            13.7563,
+            100.5018
+        )
+        repository.saveReminder(reminderDTO)
 
-        onView(withText("Error happened")).check(matches(isDisplayed()))
-        onView(withText("OK")).check(matches(isClickable()))
+        onView(withId(R.id.refreshLayout)).perform(ViewActions.swipeDown())
+        onView(withText("Reminders refreshed"))
+            .inRoot(RootMatchers.withDecorView(Matchers.not(ContextUtils.getActivity(appContext)?.window?.decorView)))
+            .check(matches(isDisplayed()))
+
+        repository.deleteAllReminders()
+    }
+
+    @Test
+    fun shouldShowError_onRefreshLayoutSwipeNoReminders() = runBlocking {
+        val fragmentScenario = launchFragmentInContainer<ReminderListFragment>(Bundle(), R.style.AppTheme)
+        dataBindingIdlingResource.monitorFragment(fragmentScenario)
+
+        onView(withId(R.id.refreshLayout)).perform(ViewActions.swipeDown())
+        onView(withText("No reminders found"))
+            .inRoot(RootMatchers.withDecorView(Matchers.not(ContextUtils.getActivity(appContext)?.window?.decorView)))
+            .check(matches(isDisplayed()))
 
         repository.deleteAllReminders()
     }

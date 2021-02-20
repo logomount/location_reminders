@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import com.firebase.ui.auth.AuthUI
@@ -51,15 +52,14 @@ class ReminderListFragment : BaseFragment() {
 
         checkDeviceLocationSettings()
 
-        binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders() }
+        binding.refreshLayout.setOnRefreshListener { _viewModel.loadReminders(true) }
 
-        _viewModel.showSnackBar.observe(viewLifecycleOwner, Observer {
-            Snackbar.make(
-                    binding.root,
-                    R.string.error_happened, Snackbar.LENGTH_LONG
-            ).setAction(android.R.string.ok) {
-                //Do nothing?
-            }.show()
+        _viewModel.showLoading.observe(viewLifecycleOwner, Observer{
+            binding.refreshLayout.isRefreshing = it
+        })
+
+        _viewModel.showToast.observe(viewLifecycleOwner, Observer {
+            Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
         })
 
         return binding.root
@@ -114,6 +114,7 @@ class ReminderListFragment : BaseFragment() {
 //                TODO: add the logout implementation
                 AuthUI.getInstance().signOut(requireContext())
                 val intent = Intent(requireContext(), AuthenticationActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(intent)
             }
         }

@@ -60,7 +60,7 @@ class RemindersListViewModelTest {
 
     @Test
     fun shouldReturnError_noReminders() = runBlockingTest {
-        fakeDataSource.reminders = null
+        fakeDataSource.setReturnError(true)
         remindersListViewModel.loadReminders()
         assertThat(remindersListViewModel.showSnackBar.getOrAwaitValue(), `is`("Reminders not found"))
     }

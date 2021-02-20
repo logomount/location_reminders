@@ -53,6 +53,7 @@ class AuthenticationActivity : AppCompatActivity() {
             val response = IdpResponse.fromResultIntent(data)
             if (resultCode == Activity.RESULT_OK) {
                 val intent = Intent(this, RemindersActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(intent)
             } else {
                 Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
